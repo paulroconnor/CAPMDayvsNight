@@ -1,11 +1,4 @@
----
-title: "Stock Beta Analysis during Recessionary Periods"
-output: 
-  html_document:
-    keep_md: true
----
-
-
+## Analysis of Hendershott, Livdan and Rösch (2020) during Recessionary Periods
 
 ### Install Packages & Load Data
 
