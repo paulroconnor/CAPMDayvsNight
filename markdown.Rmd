@@ -1,0 +1,161 @@
+---
+title: "Stock Beta Analysis during Recessionary Periods"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Install Packages & Load Data
+
+```{r include=FALSE}
+# install.packages('tidyverse','broom')
+library('tidyverse','broom')
+
+covid <- read_csv('covidprices.csv')
+dotcom <- read_csv('dotcomprices.csv')
+gfc08 <- read_csv('08prices.csv')
+```
+
+### Functions
+
+```{r}
+BetaSorting <- function(df) {
+  
+  df01 <- df %>% 
+    mutate(Date = as.Date(Date),
+           Month = format(Date, "%Y-%m")
+    ) %>%
+    group_by(Ticker, Month) %>%
+    mutate(
+      AvgMonthlyBeta = mean(Beta) # Get Average Monthly Betas for each stock
+    ) %>%
+    ungroup() %>%
+    group_by(Month) %>%
+    mutate(Decile = ntile(desc(AvgMonthlyBeta), 10)) %>%  # Sort into deciles based on monthly average betas
+    select(Date, Month, Ticker, Open, Close, Volume, PreviousDate, CloseLength, ClosetoCloseReturn, OpentoCloseReturn,
+           ClosetoOpenReturn, NightReturn, SP500Return, Beta, AvgMonthlyBeta, Decile)  # Re-Order columns
+  
+  
+  return(df01)
+  
+}
+
+```
+
+```{r}
+Averaging <- function(df) {
+  
+  df02 <- df %>%
+    group_by(Decile) %>%  # Get average statistics for each decile each month
+    summarise(
+      AvgCCReturn = mean(ClosetoCloseReturn, na.rm = TRUE),
+      AvgOCReturn = mean(OpentoCloseReturn, na.rm = TRUE),
+      AvgCOReturn = mean(ClosetoOpenReturn, na.rm = TRUE),
+      AvgBeta = mean(AvgMonthlyBeta)
+    )
+  
+  return(df02)
+}
+
+```
+
+```{r}
+Plotting <- function(df) {
+  df %>%
+    gather('Variable', 'Value', -Decile, -AvgBeta) %>%
+    mutate(
+      Variable = ifelse(Variable == 'AvgCCReturn', 'Close-to-Close Return',
+                        ifelse(Variable == 'AvgCOReturn', 'Close-to-Open Return', 'Open-to-Close Return'))
+    ) %>%
+    suppressMessages(
+    ggplot(aes(x = AvgBeta, y = Value, color = Variable)) +
+    geom_point() +
+    stat_smooth(method = 'lm', se = FALSE) +
+    labs(x = 'Average Beta', y = 'Average Return') +
+    theme_bw() + 
+    theme(
+      legend.title = element_blank() , legend.position = 'bottom', 
+      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+      axis.title = element_text(size = 14), legend.text = element_text(size = 12),
+      axis.text = element_text(size = 12)
+    )
+    )
+}
+
+```
+
+```{r}
+Regression <- function(df) {
+  
+  regCC <- lm('AvgCCReturn ~ AvgBeta', data = df)
+  regOC <- lm('AvgOCReturn ~ AvgBeta', data = df)
+  regCO <- lm('AvgCOReturn ~ AvgBeta', data = df)
+  
+  regCC_summary <- summary(regCC)
+  regOC_summary <- summary(regOC)
+  regCO_summary <- summary(regCO)
+  
+  
+  results <- tibble(
+    Model = c("Close-to-Close Return", "Open-to-Close Return", "Close-to-Open Return"),
+    Intercept_Coefficient = c(
+      coef(regCC)[1],
+      coef(regOC)[1],
+      coef(regCO)[1]
+    ),
+    Intercept_P_Value = c(
+      coef(summary(regCC))["(Intercept)", "Pr(>|t|)"],
+      coef(summary(regOC))["(Intercept)", "Pr(>|t|)"],
+      coef(summary(regCO))["(Intercept)", "Pr(>|t|)"]
+    ),
+    Slope_Coefficient = c(
+      coef(regCC)[2],
+      coef(regOC)[2],
+      coef(regCO)[2]
+    ),
+    Slope_P_Value = c(
+      coef(summary(regCC))["AvgBeta", "Pr(>|t|)"],
+      coef(summary(regOC))["AvgBeta", "Pr(>|t|)"],
+      coef(summary(regCO))["AvgBeta", "Pr(>|t|)"]
+    ),
+    R_Squared = c(
+      regCC_summary$r.squared,
+      regOC_summary$r.squared,
+      regCO_summary$r.squared
+    )
+  )
+  
+  return(results)
+}
+```
+
+### Recessionary Period 1: Covid Pandemic
+
+```{r}
+covid <- covid %>% filter(Date <= '2020-04-30')
+
+covid01 <- BetaSorting(covid)
+covid02 <- Averaging(covid01)
+Plotting(covid02)
+Regression(covid02)
+```
+
+### Recessionary Period 2: Dotcom Bubble
+
+```{r}
+dotcom01 <- BetaSorting(dotcom)
+dotcom02 <- Averaging(dotcom01)
+Plotting(dotcom02)
+Regression(dotcom02)
+```
+
+### Recessionary Period 3: '08 Global Financial Crisis
+
+```{r}
+gfc0801 <- BetaSorting(gfc08)
+gfc0802 <- Averaging(gfc0801)
+Plotting(gfc0802)
+Regression(gfc0802)
+```
