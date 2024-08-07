@@ -5,13 +5,12 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ### Install Packages & Load Data
 
-```{r message=FALSE, warning=FALSE}
+
+``` r
 library('tidyverse')
 
 covid <- read_csv('covidprices.csv')
@@ -21,7 +20,8 @@ gfc08 <- read_csv('08prices.csv')
 
 ### Functions
 
-```{r}
+
+``` r
 BetaSorting <- function(df) {
   
   df01 <- df %>% 
@@ -42,10 +42,10 @@ BetaSorting <- function(df) {
   return(df01)
   
 }
-
 ```
 
-```{r}
+
+``` r
 Averaging <- function(df) {
   
   df02 <- df %>%
@@ -59,10 +59,10 @@ Averaging <- function(df) {
   
   return(df02)
 }
-
 ```
 
-```{r}
+
+``` r
 Plotting <- function(df) {
   df %>%
     gather('Variable', 'Value', -Decile, -AvgBeta) %>%
@@ -82,10 +82,10 @@ Plotting <- function(df) {
       axis.text = element_text(size = 12)
     )
 }
-
 ```
 
-```{r}
+
+``` r
 Regression <- function(df) {
   
   regCC <- lm('AvgCCReturn ~ AvgBeta', data = df)
@@ -132,29 +132,83 @@ Regression <- function(df) {
 
 ### Recessionary Period 1: Covid Pandemic
 
-```{r paged.print=TRUE}
+
+``` r
 covid <- covid %>% filter(Date <= '2020-04-30')
 
 covid01 <- BetaSorting(covid)
 covid02 <- Averaging(covid01)
 Plotting(covid02)
+```
+
+```
+## `geom_smooth()` using formula = 'y ~ x'
+```
+
+![](markdown_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
 Regression(covid02)
 ```
 
+
+
+|Model                 | Intercept Coefficient | Intercept P Value | Slope Coefficient | Slope P Value |R Squared |
+|:---------------------|:---------------------:|:-----------------:|:-----------------:|:-------------:|:---------|
+|Close-to-Close Return |       0.4856616       |     0.0000201     |    -0.5607722     |   0.0000031   |0.9422752 |
+|Open-to-Close Return  |       0.9933044       |     0.0000244     |    -0.8522996     |   0.0000343   |0.8952886 |
+|Close-to-Open Return  |      -0.4461215       |     0.0017708     |     0.2142944     |   0.0397414   |0.4293017 |
+
 ### Recessionary Period 2: Dotcom Bubble
 
-```{r}
+
+``` r
 dotcom01 <- BetaSorting(dotcom)
 dotcom02 <- Averaging(dotcom01)
 Plotting(dotcom02)
+```
+
+```
+## `geom_smooth()` using formula = 'y ~ x'
+```
+
+![](markdown_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
 Regression(dotcom02)
 ```
 
+
+
+|Model                 | Intercept Coefficient | Intercept P Value | Slope Coefficient | Slope P Value |R Squared |
+|:---------------------|:---------------------:|:-----------------:|:-----------------:|:-------------:|:---------|
+|Close-to-Close Return |       0.0979227       |     0.0008144     |    -0.0681278     |   0.0045557   |0.6551212 |
+|Open-to-Close Return  |       0.1165687       |     0.0015054     |    -0.0504533     |   0.0592592   |0.3763325 |
+|Close-to-Open Return  |      -0.0165780       |     0.2891903     |    -0.0163281     |   0.2634337   |0.1531500 |
+
 ### Recessionary Period 3: '08 Global Financial Crisis
 
-```{r}
+
+``` r
 gfc0801 <- BetaSorting(gfc08)
 gfc0802 <- Averaging(gfc0801)
 Plotting(gfc0802)
+```
+
+```
+## `geom_smooth()` using formula = 'y ~ x'
+```
+
+![](markdown_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
 Regression(gfc0802)
 ```
+
+
+
+|Model                 | Intercept Coefficient | Intercept P Value | Slope Coefficient | Slope P Value |R Squared |
+|:---------------------|:---------------------:|:-----------------:|:-----------------:|:-------------:|:---------|
+|Close-to-Close Return |      -0.0454629       |     0.0377504     |     0.0095019     |   0.5724889   |0.0414833 |
+|Open-to-Close Return  |       0.0866347       |     0.0231720     |    -0.0742430     |   0.0263325   |0.4800872 |
+|Close-to-Open Return  |      -0.1308399       |     0.0071751     |     0.0850428     |   0.0299001   |0.4648223 |
