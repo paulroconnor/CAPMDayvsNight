@@ -69,7 +69,6 @@ Plotting <- function(df) {
       Variable = ifelse(Variable == 'AvgCCReturn', 'Close-to-Close Return',
                         ifelse(Variable == 'AvgCOReturn', 'Close-to-Open Return', 'Open-to-Close Return'))
     ) %>%
-    suppressMessages(
     ggplot(aes(x = AvgBeta, y = Value, color = Variable)) +
     geom_point() +
     stat_smooth(method = 'lm', se = FALSE) +
@@ -80,7 +79,6 @@ Plotting <- function(df) {
       panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       axis.title = element_text(size = 14), legend.text = element_text(size = 12),
       axis.text = element_text(size = 12)
-    )
     )
 }
 
