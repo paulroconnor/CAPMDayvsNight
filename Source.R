@@ -4,6 +4,7 @@
 # Install Packages & Load Data -------------------------------------------------
 
 library('tidyverse')
+library('broom')
 
 covid <- read_csv('covidprices.csv')
 dotcom <- read_csv('dotcomprices.csv')
@@ -77,11 +78,44 @@ Regression <- function(df) {
   regOC <- lm('AvgOCReturn ~ AvgBeta', data = df)
   regCO <- lm('AvgCOReturn ~ AvgBeta', data = df)
   
-  print(summary(regCC))
-  print(summary(regOC))
-  print(summary(regCO))
+  regCC_summary <- summary(regCC)
+  regOC_summary <- summary(regOC)
+  regCO_summary <- summary(regCO)
   
+  
+  results <- tibble(
+    Model = c("Close-to-Close Return", "Open-to-Close Return", "Close-to-Open Return"),
+    Intercept_Coefficient = c(
+      coef(regCC)[1],
+      coef(regOC)[1],
+      coef(regCO)[1]
+    ),
+    Intercept_P_Value = c(
+      coef(summary(regCC))["(Intercept)", "Pr(>|t|)"],
+      coef(summary(regOC))["(Intercept)", "Pr(>|t|)"],
+      coef(summary(regCO))["(Intercept)", "Pr(>|t|)"]
+    ),
+    Slope_Coefficient = c(
+      coef(regCC)[2],
+      coef(regOC)[2],
+      coef(regCO)[2]
+    ),
+    Slope_P_Value = c(
+      coef(summary(regCC))["AvgBeta", "Pr(>|t|)"],
+      coef(summary(regOC))["AvgBeta", "Pr(>|t|)"],
+      coef(summary(regCO))["AvgBeta", "Pr(>|t|)"]
+    ),
+    R_Squared = c(
+      regCC_summary$r.squared,
+      regOC_summary$r.squared,
+      regCO_summary$r.squared
+    )
+  )
+  
+  return(results)
 }
+
+
 
 
 
